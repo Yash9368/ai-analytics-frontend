@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [devices, setDevices] = useState<any[]>([]);
   const [topPages, setTopPages] = useState<any[]>([]);
   const [realtime, setRealtime] = useState<any>({ activeUsers: 0, devices: [], activePages: [] });
+  const [isRealtimeMode, setIsRealtimeMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -95,36 +96,83 @@ export default function Dashboard() {
     );
   }
 
-  const metrics = [
-    {
-      title: "Total Users",
-      value: data?.totalUsers || 0,
-      trend: data?.usersTrend || "+12%",
-      icon: <Users className="h-5 w-5 text-blue-400" />,
-      color: "from-blue-500/20 to-transparent",
-    },
-    {
-      title: "Page Views",
-      value: data?.pageViews || 0,
-      trend: data?.pageViewsTrend || "+18%",
-      icon: <Eye className="h-5 w-5 text-purple-400" />,
-      color: "from-purple-500/20 to-transparent",
-    },
-    {
-      title: "Bounce Rate",
-      value: data?.bounceRate ? `${data.bounceRate}%` : "0%",
-      trend: data?.bounceTrend || "-2.4%",
-      icon: <Activity className="h-5 w-5 text-emerald-400" />,
-      color: "from-emerald-500/20 to-transparent",
-    },
-    {
-      title: "Avg Session",
-      value: data?.avgSessionDuration || "0s",
-      trend: "+5.1%",
-      icon: <Clock className="h-5 w-5 text-amber-400" />,
-      color: "from-amber-500/20 to-transparent",
-    },
-  ];
+  const chartData = isRealtimeMode ? (realtime?.timeline || []) : traffic;
+  const pieData = isRealtimeMode
+    ? realtime?.devices?.map((d: any) => ({
+        name: d.name,
+        value: d.value,
+      })) || []
+    : devices;
+
+  const pagesList = isRealtimeMode
+    ? (realtime?.activePages || []).map((p: any) => ({
+        page: p.page,
+        views: p.activeUsers,
+        avgTime: "Active Now"
+      }))
+    : topPages;
+
+  const metrics = isRealtimeMode
+    ? [
+        {
+          title: "Active Users (Last 30m)",
+          value: realtime?.activeUsers || 0,
+          trend: "Live",
+          icon: <Users className="h-5 w-5 text-emerald-400" />,
+          color: "from-emerald-500/20 to-transparent",
+        },
+        {
+          title: "Page Views (Last 30m)",
+          value: realtime?.pageViews || 0,
+          trend: "Live",
+          icon: <Eye className="h-5 w-5 text-emerald-400" />,
+          color: "from-emerald-500/20 to-transparent",
+        },
+        {
+          title: "Live Event Count",
+          value: realtime?.eventCount || 0,
+          trend: "Live",
+          icon: <Activity className="h-5 w-5 text-emerald-400" />,
+          color: "from-emerald-500/20 to-transparent",
+        },
+        {
+          title: "Avg Events / User",
+          value: realtime?.avgEventsPerUser || 0,
+          trend: "Live",
+          icon: <Clock className="h-5 w-5 text-emerald-400" />,
+          color: "from-emerald-500/20 to-transparent",
+        },
+      ]
+    : [
+        {
+          title: "Total Users",
+          value: data?.totalUsers || 0,
+          trend: data?.usersTrend || "+12%",
+          icon: <Users className="h-5 w-5 text-blue-400" />,
+          color: "from-blue-500/20 to-transparent",
+        },
+        {
+          title: "Page Views",
+          value: data?.pageViews || 0,
+          trend: data?.pageViewsTrend || "+18%",
+          icon: <Eye className="h-5 w-5 text-purple-400" />,
+          color: "from-purple-500/20 to-transparent",
+        },
+        {
+          title: "Bounce Rate",
+          value: data?.bounceRate ? `${data.bounceRate}%` : "0%",
+          trend: data?.bounceTrend || "-2.4%",
+          icon: <Activity className="h-5 w-5 text-emerald-400" />,
+          color: "from-emerald-500/20 to-transparent",
+        },
+        {
+          title: "Avg Session",
+          value: data?.avgSessionDuration || "0s",
+          trend: "+5.1%",
+          icon: <Clock className="h-5 w-5 text-amber-400" />,
+          color: "from-amber-500/20 to-transparent",
+        },
+      ];
 
   return (
     <div className="min-h-screen p-6 md:p-12 lg:p-20 font-sans max-w-7xl mx-auto">
@@ -144,15 +192,26 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="glass-panel px-6 py-3 flex items-center gap-3 w-fit border-emerald-500/20">
+          {/* Live Pulse Toggle Button */}
+          <button
+            onClick={() => setIsRealtimeMode(!isRealtimeMode)}
+            className={`glass-panel px-6 py-3 flex items-center gap-3 transition-all duration-300 hover:scale-105 border ${
+              isRealtimeMode
+                ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
+                : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700"
+            }`}
+          >
             <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              {isRealtimeMode && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              )}
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${isRealtimeMode ? "bg-emerald-500" : "bg-zinc-500"}`}></span>
             </span>
-            <span className="text-sm font-bold text-emerald-300">
-              {realtime.activeUsers} {realtime.activeUsers === 1 ? "Active User" : "Active Users"} Now
+            <span className="text-sm font-bold">
+              {isRealtimeMode ? "Live Pulse Mode (Active)" : "Switch to Live Pulse"}
             </span>
-          </div>
+          </button>
+
           <div className="glass-panel px-6 py-3 flex items-center gap-3 w-fit border-blue-500/20">
             <Sparkles className="h-5 w-5 text-blue-400" />
             <span className="text-sm font-medium text-blue-100">Live Production Data</span>
@@ -202,18 +261,22 @@ export default function Dashboard() {
         >
           <div className="mb-8 flex justify-between items-end">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Traffic Overview</h2>
-              <p className="text-zinc-400 text-sm">Unique visitors and sessions over time</p>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {isRealtimeMode ? "Traffic Pulse" : "Traffic Overview"}
+              </h2>
+              <p className="text-zinc-400 text-sm">
+                {isRealtimeMode ? "Minute-by-minute active users (last 30m)" : "Unique visitors and sessions over time"}
+              </p>
             </div>
           </div>
           <div className="h-[350px] w-full">
             {mounted && (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={traffic.length > 0 ? traffic : [{date: "N/A", users: 0}]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={chartData.length > 0 ? chartData : [{date: "N/A", users: 0}]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      <stop offset="5%" stopColor={isRealtimeMode ? "#10b981" : "#3b82f6"} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={isRealtimeMode ? "#10b981" : "#3b82f6"} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -223,7 +286,7 @@ export default function Dashboard() {
                     tickLine={false} 
                     tick={{ fill: '#a1a1aa' }} 
                     dy={10} 
-                    tickFormatter={(val) => val && val.length > 4 ? val.substring(4) : val}
+                    tickFormatter={(val) => !isRealtimeMode && val && val.length > 4 ? val.substring(4) : val}
                   />
                   <YAxis 
                     axisLine={false} 
@@ -242,7 +305,7 @@ export default function Dashboard() {
                   <Area 
                     type="monotone" 
                     dataKey="users" 
-                    stroke="#3b82f6" 
+                    stroke={isRealtimeMode ? "#10b981" : "#3b82f6"} 
                     strokeWidth={3}
                     fillOpacity={1} 
                     fill="url(#colorUsers)" 
@@ -269,7 +332,7 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={devices.length > 0 ? devices : [{name: 'Unknown', value: 1}]}
+                    data={pieData.length > 0 ? pieData : [{name: 'Unknown', value: 1}]}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -278,7 +341,7 @@ export default function Dashboard() {
                     dataKey="value"
                     stroke="none"
                   >
-                    {(devices.length > 0 ? devices : [{name: 'Unknown', value: 1}]).map((entry, index) => (
+                    {(pieData.length > 0 ? pieData : [{name: 'Unknown', value: 1}]).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -294,7 +357,7 @@ export default function Dashboard() {
             )}
             {/* Custom Legend */}
             <div className="flex justify-center gap-4 mt-2">
-              {devices.map((device, idx) => (
+              {pieData.map((device, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                   <span className="text-xs text-zinc-400 capitalize">{device.name}</span>
@@ -314,28 +377,32 @@ export default function Dashboard() {
       >
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2">Top Performing Pages</h2>
-            <p className="text-zinc-400 text-sm">Pages with the highest engagement</p>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {isRealtimeMode ? "Top Active Pages" : "Top Performing Pages"}
+            </h2>
+            <p className="text-zinc-400 text-sm">
+              {isRealtimeMode ? "Pages currently being browsed in real-time" : "Pages with the highest engagement"}
+            </p>
           </div>
-          <Globe className="h-6 w-6 text-zinc-500" />
+          <Globe className={`h-6 w-6 ${isRealtimeMode ? "text-emerald-500 animate-spin" : "text-zinc-500"}`} style={{ animationDuration: '4s' }} />
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-400">
             <thead className="text-xs uppercase text-zinc-500 border-b border-white/10">
               <tr>
-                <th className="px-4 py-3 font-medium">Page Path</th>
-                <th className="px-4 py-3 font-medium text-right">Views</th>
-                <th className="px-4 py-3 font-medium text-right">Avg. Time</th>
+                <th className="px-4 py-3 font-medium">{isRealtimeMode ? "Screen / Page Title" : "Page Path"}</th>
+                <th className="px-4 py-3 font-medium text-right">{isRealtimeMode ? "Active Users" : "Views"}</th>
+                <th className="px-4 py-3 font-medium text-right">{isRealtimeMode ? "Status" : "Avg. Time"}</th>
               </tr>
             </thead>
             <tbody>
-              {topPages.length > 0 ? (
-                topPages.map((page, idx) => (
+              {pagesList.length > 0 ? (
+                pagesList.map((page, idx) => (
                   <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-4 font-medium text-zinc-200">{page.page}</td>
-                    <td className="px-4 py-4 text-right text-blue-400 font-medium">{page.views}</td>
-                    <td className="px-4 py-4 text-right">{page.avgTime}</td>
+                    <td className={`px-4 py-4 text-right font-medium ${isRealtimeMode ? "text-emerald-400" : "text-blue-400"}`}>{page.views}</td>
+                    <td className={`px-4 py-4 text-right ${isRealtimeMode ? "text-emerald-300 font-bold" : ""}`}>{page.avgTime}</td>
                   </tr>
                 ))
               ) : (
