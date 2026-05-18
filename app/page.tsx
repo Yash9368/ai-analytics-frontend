@@ -24,11 +24,13 @@ export default function Dashboard() {
   const [traffic, setTraffic] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [topPages, setTopPages] = useState<any[]>([]);
+  const [realtime, setRealtime] = useState<any>({ activeUsers: 0, devices: [], activePages: [] });
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
     const fetchData = async () => {
       try {
         const [overviewRes, trafficRes, devicesRes, pagesRes] = await Promise.all([
@@ -62,7 +64,23 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
+
+    const fetchRealtime = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/realtime`);
+        const rData = await res.json();
+        setRealtime(rData);
+      } catch (error) {
+        console.error("Failed to fetch realtime", error);
+      }
+    };
+
     fetchData();
+    fetchRealtime();
+
+    // Poll realtime data every 15 seconds
+    const interval = setInterval(fetchRealtime, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -125,10 +143,21 @@ export default function Dashboard() {
             Real-time intelligence from your Google Analytics 4 property.
           </p>
         </div>
-        <div className="glass-panel px-6 py-3 flex items-center gap-3 w-fit border-blue-500/20">
-          <Sparkles className="h-5 w-5 text-blue-400" />
-          <span className="text-sm font-medium text-blue-100">Live Production Data</span>
-          <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse ml-2" />
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="glass-panel px-6 py-3 flex items-center gap-3 w-fit border-emerald-500/20">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <span className="text-sm font-bold text-emerald-300">
+              {realtime.activeUsers} {realtime.activeUsers === 1 ? "Active User" : "Active Users"} Now
+            </span>
+          </div>
+          <div className="glass-panel px-6 py-3 flex items-center gap-3 w-fit border-blue-500/20">
+            <Sparkles className="h-5 w-5 text-blue-400" />
+            <span className="text-sm font-medium text-blue-100">Live Production Data</span>
+            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse ml-2" />
+          </div>
         </div>
       </motion.header>
 
