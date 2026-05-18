@@ -341,7 +341,7 @@ export default function Dashboard() {
                     dataKey="value"
                     stroke="none"
                   >
-                    {(pieData.length > 0 ? pieData : [{name: 'Unknown', value: 1}]).map((entry, index) => (
+                    {(pieData.length > 0 ? pieData : [{name: 'Unknown', value: 1}]).map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -357,7 +357,7 @@ export default function Dashboard() {
             )}
             {/* Custom Legend */}
             <div className="flex justify-center gap-4 mt-2">
-              {pieData.map((device, idx) => (
+              {pieData.map((device: any, idx: number) => (
                 <div key={idx} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                   <span className="text-xs text-zinc-400 capitalize">{device.name}</span>
@@ -398,7 +398,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {pagesList.length > 0 ? (
-                pagesList.map((page, idx) => (
+                pagesList.map((page: any, idx: number) => (
                   <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-4 font-medium text-zinc-200">{page.page}</td>
                     <td className={`px-4 py-4 text-right font-medium ${isRealtimeMode ? "text-emerald-400" : "text-blue-400"}`}>{page.views}</td>
