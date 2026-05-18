@@ -25,8 +25,10 @@ export default function Dashboard() {
   const [devices, setDevices] = useState<any[]>([]);
   const [topPages, setTopPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const fetchData = async () => {
       try {
         const [overviewRes, trafficRes, devicesRes, pagesRes] = await Promise.all([
@@ -44,11 +46,11 @@ export default function Dashboard() {
         setData(overview);
         setTraffic(trafficData.data || []);
         
-        // Format devices for PieChart
+        // Format devices for PieChart using correct backend keys (name and value)
         if (devicesData.data) {
            const formatted = devicesData.data.map((d: any) => ({
-             name: d.deviceCategory,
-             value: d.users,
+             name: d.name,
+             value: d.value,
            }));
            setDevices(formatted);
         }
@@ -176,47 +178,49 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={traffic.length > 0 ? traffic : [{date: "N/A", users: 0}]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#a1a1aa' }} 
-                  dy={10} 
-                  tickFormatter={(val) => val.length > 4 ? val.substring(4) : val}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#a1a1aa' }} 
-                />
-                <Tooltip
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(9, 9, 11, 0.9)', 
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '12px',
-                    backdropFilter: 'blur(8px)',
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="users" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorUsers)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {mounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={traffic.length > 0 ? traffic : [{date: "N/A", users: 0}]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#a1a1aa' }} 
+                    dy={10} 
+                    tickFormatter={(val) => val && val.length > 4 ? val.substring(4) : val}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#a1a1aa' }} 
+                  />
+                  <Tooltip
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(9, 9, 11, 0.9)', 
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(8px)',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="users" 
+                    stroke="#3b82f6" 
+                    strokeWidth={3}
+                    fillOpacity={1} 
+                    fill="url(#colorUsers)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </motion.div>
 
@@ -232,31 +236,33 @@ export default function Dashboard() {
             <p className="text-zinc-400 text-sm">Audience platform preference</p>
           </div>
           <div className="flex-1 min-h-[250px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={devices.length > 0 ? devices : [{name: 'Unknown', value: 1}]}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {(devices.length > 0 ? devices : [{name: 'Unknown', value: 1}]).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(9, 9, 11, 0.9)', 
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {mounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={devices.length > 0 ? devices : [{name: 'Unknown', value: 1}]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {(devices.length > 0 ? devices : [{name: 'Unknown', value: 1}]).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(9, 9, 11, 0.9)', 
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             {/* Custom Legend */}
             <div className="flex justify-center gap-4 mt-2">
               {devices.map((device, idx) => (
@@ -298,9 +304,9 @@ export default function Dashboard() {
               {topPages.length > 0 ? (
                 topPages.map((page, idx) => (
                   <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-4 font-medium text-zinc-200">{page.pagePath}</td>
-                    <td className="px-4 py-4 text-right text-blue-400 font-medium">{page.pageViews}</td>
-                    <td className="px-4 py-4 text-right">{page.avgSessionDuration}</td>
+                    <td className="px-4 py-4 font-medium text-zinc-200">{page.page}</td>
+                    <td className="px-4 py-4 text-right text-blue-400 font-medium">{page.views}</td>
+                    <td className="px-4 py-4 text-right">{page.avgTime}</td>
                   </tr>
                 ))
               ) : (
